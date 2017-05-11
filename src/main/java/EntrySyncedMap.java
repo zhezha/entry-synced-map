@@ -1,3 +1,6 @@
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -11,12 +14,27 @@ public class EntrySyncedMap {
 
     public EntrySyncedMap() {    }
 
-    public List<String> getList(String key) {
-        return contentMap.get(key);
-    }
-
-    public void putList(String key, List<String> list) {
-        contentMap.put(key, list);
+    public void processEntry(String key, long duration, SimpleDateFormat sdf) {
+        lockEntry(key);
+        try {
+            List<String> list = contentMap.get(key);
+            if (list == null) {
+                list = new ArrayList<>();
+            }
+            if (duration > 0) {
+                printMessage("go to sleep for " + duration + " ms");
+                Thread.sleep(duration);
+                printMessage("wake up");
+            }
+            String value = "Thread " + Thread.currentThread().getName() + ": " + sdf.format(new Date());
+            list.add(value);
+            printMessage("write to entry " + key + ": " + list.toString());
+            contentMap.put(key, list);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            unlockEntry(key);
+        }
     }
 
     protected void lockEntry(String key) {
